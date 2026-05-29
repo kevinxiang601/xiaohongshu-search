@@ -1,0 +1,4 @@
+interface:
+  display_name: "Xiaohongshu Search"
+  short_description: "Search Xiaohongshu travel posts and summarize tips"
+  default_prompt: "Use $xiaohongshu-search to gather Xiaohongshu travel advice and turn it into a practical guide."

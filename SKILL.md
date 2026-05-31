@@ -1,6 +1,6 @@
 ---
 name: xiaohongshu-search
-description: Research and summarize travel guidance primarily from Xiaohongshu posts. Use when the user asks for travel guides, itineraries, hotel or food choices, route planning, ticket strategy, crowd-avoidance tips, packing advice, or destination comparisons that should be grounded in real Xiaohongshu experience, especially when the current workspace already contains travel-planning files that should be read first. Prefer searching Xiaohongshu in the user's Codex-plugin-controlled browser session, opening posts from search-result cards, scrolling result pages and post detail panels, and using non-Xiaohongshu sources only as secondary support for hard facts.
+description: Research and summarize travel guidance primarily from Xiaohongshu posts. Use when the user asks for travel guides, itineraries, hotel or food choices, route planning, ticket strategy, crowd-avoidance tips, packing advice, or destination comparisons that should be grounded in real Xiaohongshu experience, especially when the current workspace already contains travel-planning files that should be read first. Prefer searching Xiaohongshu in the user's normal browser through the Codex browser extension, opening posts from search-result cards, scrolling result pages and post detail panels, and using non-Xiaohongshu sources only as secondary support for hard facts.
 ---
 
 # Xiaohongshu Search
@@ -11,7 +11,7 @@ Use this skill to build travel answers from real Xiaohongshu experience posts in
 
 The preferred workflow is:
 
-1. Use the user's browser session controlled by the Codex browser plugin.
+1. Use the user's normal browser session controlled by the browser Codex extension.
 2. Search inside Xiaohongshu.
 3. Open posts by clicking result cards, not by directly visiting copied post URLs.
 4. Scroll both the search results page and the opened post detail panel.
@@ -22,21 +22,29 @@ Important discovery from testing: directly opening a Xiaohongshu post URL may sh
 
 ## Browser Requirement
 
-This skill must use Xiaohongshu through the user's browser session controlled by the Codex browser plugin.
+This skill must use Xiaohongshu through the user's normal browser session controlled by the browser Codex extension.
 
-The controlled browser may be Edge or Chrome depending on where the user installed the Codex extension. Do not assume it must be Chrome. Use the available browser-plugin skill/tooling for the current environment.
+Do not use the Codex in-app Browser, the right-side built-in browser, or `browser:control-in-app-browser` for Xiaohongshu collection. The in-app Browser does not share the user's Xiaohongshu login state and is not acceptable for this skill.
+
+If the user's normal browser is not open:
+
+- Use `computer-use:computer-use` to open the user's normal browser first.
+- Then connect through the browser Codex extension / extension-backed browser control.
+- Then open Xiaohongshu in that browser session and continue the workflow.
+
+If the browser Codex extension cannot connect, stop and explain the issue. Do not switch to the in-app Browser.
 
 Important rule:
 
-- If the browser plugin cannot connect, stop the task and explain the issue to the user.
+- If the browser Codex extension cannot connect, stop the task and explain the issue to the user.
 - If Xiaohongshu cannot be accessed through the controlled browser session, stop and explain.
 - If the user is not logged in and the task requires logged-in Xiaohongshu search, ask the user to log in in the controlled browser page, then retry.
-- Do not fall back to generic web search, search engines, other browsers, or non-Xiaohongshu sources for finding posts unless the user explicitly asks for that.
+- Do not fall back to the Codex in-app Browser, generic web search, search engines, other browsers, or non-Xiaohongshu sources for finding posts unless the user explicitly asks for that.
 - Non-Xiaohongshu sources may only be used later for hard facts such as opening hours, ticket rules, official policy, transport schedules, or weather, and only when needed.
 
-If the Codex browser plugin cannot connect to the user's browser, do not continue with another search method. Say something like:
+If the browser Codex extension cannot connect, do not continue with another search method. Say something like:
 
-> 我现在连不上装有 Codex 插件的浏览器，所以没法使用你的小红书登录态抓取帖子。这个 skill 要求必须从浏览器插件进入小红书；我不会改用其他搜索来源。你可以检查浏览器插件是否开启，或重新打开浏览器后让我再试。
+> 我现在连不上装有 Codex 插件的浏览器，所以没法使用你的小红书登录态抓取帖子。这个 skill 要求必须从你的浏览器 Codex 插件进入小红书；我不会改用右侧内置浏览器或其他搜索来源。你可以检查浏览器是否打开、Codex 插件是否开启，或重新打开浏览器后让我再试。
 
 Then stop.
 
@@ -73,7 +81,7 @@ Use keyword sets like:
 
 ### 3. Search Xiaohongshu inside the controlled browser
 
-Use the browser session controlled by the Codex browser plugin.
+Use the user's normal browser session controlled by the browser Codex extension. Do not use the right-side built-in Browser.
 
 1. Open `https://www.xiaohongshu.com/explore?language=zh-CN`.
 2. Use the Xiaohongshu search box or Xiaohongshu search-result page.
@@ -254,26 +262,32 @@ Example structure:
 - "避坑"
 - "一日路线建议"
 
-## Browser Extraction Pattern
+## Browser Extension Extraction Pattern
 
 When using browser plugin tools, the successful pattern is:
 
-1. Connect to the Codex-plugin-controlled browser.
-2. Open Xiaohongshu.
-3. Search keyword inside Xiaohongshu.
-4. Click a result card.
-5. Extract detail panel text.
-6. Scroll the post detail area.
-7. Extract again.
-8. Close panel.
-9. Scroll result page if needed.
-10. Continue to the next post.
+1. If the user's normal browser is not open, use Computer Use to open it first.
+2. Connect to that browser through the browser Codex extension / extension-backed browser control.
+3. Open Xiaohongshu.
+4. Search keyword inside Xiaohongshu.
+5. Click a result card.
+6. Extract detail panel text.
+7. Scroll the post detail area.
+8. Extract again.
+9. Close panel.
+10. Scroll result page if needed.
+11. Continue to the next post.
 
 Pseudo-flow:
 
 ```js
-// Conceptual flow only. Follow the active browser-plugin skill's exact setup instructions.
+// Conceptual flow only. Follow the active extension-backed browser skill's exact setup instructions.
+// Do not use the Codex in-app Browser/right-side Browser for this skill.
 
+if the user's normal browser is not open:
+  open the user's normal browser with Computer Use
+
+connect to the browser through the Codex browser extension
 open Xiaohongshu explore page
 search keyword inside Xiaohongshu
 
@@ -304,6 +318,7 @@ while collectedPosts < target:
 
 Important implementation notes:
 
+- Do not use the Codex in-app Browser even if it is easier to open a page there.
 - Clicking search-result cards is more reliable than directly opening post URLs.
 - If direct URL opens an App-only block, go back to search results and click the card.
 - If a card opens but the text seems incomplete, scroll the right-side detail area.
@@ -328,7 +343,7 @@ Before finalizing, confirm:
 
 - Xiaohongshu was the main source.
 - Multiple posts were inspected.
-- Browser plugin access worked; if it did not work, the task stopped instead of falling back to other search sources.
+- Browser Codex extension access worked; if it did not work, the task stopped instead of falling back to the in-app Browser or other search sources.
 - Multiple Xiaohongshu keyword searches were used if the first keyword was weak.
 - Search-result cards were clicked directly when possible.
 - The search results page was scrolled if there were not enough posts.
